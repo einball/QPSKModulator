@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 utils.loadPlatform("ti.platforms.dsk6713");
 
 /* The following DSP/BIOS Features are enabled.  */
@@ -58,3 +59,65 @@ bios.HWI.instance("HWI_INT8").interruptMask = "none";
 // !GRAPHICAL_CONFIG_TOOL_SCRIPT_INSERT_POINT!
 
 prog.gen();
+=======
+utils.loadPlatform("ti.platforms.dsk6713");
+
+/* The following DSP/BIOS Features are enabled.  */
+bios.enableRealTimeAnalysis(prog);
+bios.enableRtdx(prog);
+bios.enableTskManager(prog);
+
+bios.PRD.create("LEDBlinker");
+bios.PRD.instance("LEDBlinker").order = 1;
+bios.PRD.instance("LEDBlinker").fxn = prog.extern("Blink_LED");
+bios.PRD.instance("LEDBlinker").period = 100;
+bios.PRD.instance("LEDBlinker").period = 10;
+bios.PRD.instance("LEDBlinker").fxn = prog.extern("Blink_LED", "asm");
+bios.PRD.instance("LEDBlinker").period = 100;
+bios.PRD.instance("LEDBlinker").fxn = prog.extern("Blink_LED");
+bios.CLK.OBJMEMSEG = prog.get("IRAM");
+bios.HWI.instance("HWI_INT4").interruptSource = prog.get("MCSP_1_Receive");
+bios.HWI.instance("HWI_INT4").useDispatcher = 1;
+bios.HWI.instance("HWI_INT4").fxn = prog.extern("HWI_McBSP1_recv", "asm");
+bios.HWI.instance("HWI_INT4").fxn = prog.extern("HWI_McBSP1_recv");
+bios.HWI.instance("HWI_INT4").interruptSource = prog.get("EDMA_Controller");
+bios.HWI.instance("HWI_INT4").fxn = prog.extern("HWI_handleEDMAInterrupt");
+bios.PRD.instance("LEDBlinker").fxn = prog.extern("PER_Blink_LED");
+bios.SWI.create("SWI0");
+bios.SWI.instance("SWI0").order = 1;
+bios.SWI.instance("SWI0").fxn = prog.extern("SWI_processData");
+bios.SWI.instance("SWI0").fxn = prog.extern("SWI_processPing");
+bios.SWI.create("SWI1");
+bios.SWI.instance("SWI1").order = 2;
+bios.SWI.instance("SWI1").fxn = prog.extern("SWI_processPong");
+bios.SWI.instance("PRD_swi").order = 1;
+bios.SWI.instance("KNL_swi").order = 2;
+bios.SWI.instance("SWI1").order = 3;
+bios.SWI.instance("SWI0").destroy();
+bios.SWI.create("procPing");
+bios.SWI.instance("procPing").order = 5;
+bios.SWI.instance("procPing").order = 3;
+bios.SWI.instance("SWI1").destroy();
+bios.SWI.create("procPong");
+bios.SWI.instance("procPong").order = 5;
+bios.SWI.instance("procPong").fxn = prog.extern("SWI_processPong");
+bios.SWI.instance("procPing").fxn = prog.extern("processPing");
+bios.SWI.instance("procPing").fxn = prog.extern("SWI_processPing");
+bios.HWI.instance("HWI_INT4").interruptMask = "none";
+bios.HWI.instance("HWI_INT12").fxn = prog.extern("HWI_toggle");
+bios.HWI.instance("HWI_INT12").useDispatcher = 1;
+bios.HWI.instance("HWI_INT12").interruptSource = prog.get("MCSP_1_Receive");
+bios.HWI.instance("HWI_INT4").interruptMask = "self";
+bios.HWI.instance("HWI_INT12").fxn = prog.extern("HWI_unused", "asm");
+bios.HWI.instance("HWI_INT4").fxn = prog.extern("HWI_unused", "asm");
+bios.HWI.instance("HWI_INT4").interruptSource = prog.get("HSRTDX11");
+bios.HWI.instance("HWI_INT4").useDispatcher = 0;
+bios.HWI.instance("HWI_INT8").fxn = prog.extern("HWI_handleEDMAInterrupt");
+bios.HWI.instance("HWI_INT8").useDispatcher = 1;
+bios.SWI.instance("procPong").priority = 2;
+bios.SWI.instance("procPong").priority = 1;
+bios.HWI.instance("HWI_INT8").interruptMask = "none";
+// !GRAPHICAL_CONFIG_TOOL_SCRIPT_INSERT_POINT!
+
+prog.gen();
+>>>>>>> ab23cd8a9350fd4523f9f55789349701ba5af898
