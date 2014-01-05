@@ -26,6 +26,9 @@
 /*Variables to add to watch expressions */
 int g = 0;
 int processping = 0, processpong = 0;
+uint16_t arr[4] = {0x0000,0x7fff, 0x0000, 0x8000 };
+
+uint8_t dataStream[16] = {0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00};
 
 /* Important stuff */
 MCBSP_Handle hMcBsp;
@@ -39,35 +42,12 @@ EDMA_Handle hEDMATrxPong;
 
 volatile int tccRcvPing, tccRcvPong, tccTrxPing, tccTrxPong;
 
-float iBufPing[BUF_SIZE], iBufPong[BUF_SIZE], oBufPing[BUF_SIZE], oBufPong[BUF_SIZE];
+uint32_t oBufPing[BUF_SIZE], oBufPong[BUF_SIZE];
 
-int RcvPingDone=0;
-int RcvPongDone=0;
 int TrxPingDone=0;
 int TrxPongDone=0;
 
 /* The config needs further commenting on what I have done */
-EDMA_Config conf_EDMA_iBuf = {
-    EDMA_FMKS(OPT, PRI, HIGH)           |  // Distribute to the two Queues
-    EDMA_FMKS(OPT, ESIZE, 16BIT)       |  // Element size
-    EDMA_FMKS(OPT, 2DS, NO)            |  // kein 2D-Transfer
-    EDMA_FMKS(OPT, SUM, NONE)          |  // Quell-update mode -> FEST (McBSP)!!!
-    EDMA_FMKS(OPT, 2DD, NO)            |  // 2kein 2D-Transfer
-    EDMA_FMKS(OPT, DUM, INC)           |  // Ziel-update mode
-    EDMA_FMKS(OPT, TCINT, YES)         |  // EDMA interrupt erzeugen?
-    EDMA_FMKS(OPT, TCC, OF(0))         |  // Transfer complete code (TCC)
-    EDMA_FMKS(OPT, LINK, YES)          |  // Link Parameter nutzen?
-    EDMA_FMKS(OPT, FS, NO),               // Frame Sync nutzen?
-    EDMA_FMKS(SRC, SRC, OF(0)),           // Quell-Adresse
-    EDMA_FMK (CNT, FRMCNT, NULL)       |  // Anzahl Frames
-    EDMA_FMK (CNT, ELECNT, 1024),   		  // Anzahl Elemente
-    (uint32_t)&iBufPing,       		  // Ziel-Adresse
-    EDMA_FMKS(IDX, FRMIDX, DEFAULT)    |  // Frame index Wert
-    EDMA_FMKS(IDX, ELEIDX, DEFAULT),      // Element index Wert
-    EDMA_FMK (RLD, ELERLD, NULL)       |  // Reload Element
-    EDMA_FMK (RLD, LINK, NULL)            // Reload Link
-};
-
 EDMA_Config conf_EDMA_oBuf = {
     EDMA_FMKS(OPT, PRI, HIGH)          |  // Distribute to the two Queues
     EDMA_FMKS(OPT, ESIZE, 16BIT)       |  // Element size

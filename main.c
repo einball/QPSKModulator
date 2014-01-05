@@ -94,21 +94,9 @@ void HWI_handleEDMAInterrupt(){
 	g++; //How often did the interrupt fire?
 
 	/* Debug */
-	int RcvPingIntF = EDMA_intTest(tccRcvPing);
 	int TrxPingIntF = EDMA_intTest(tccTrxPing);
-	int RcvPongIntF = EDMA_intTest(tccRcvPong);
 	int TrxPongIntF = EDMA_intTest(tccTrxPong);
 	/* Debug end */
-
-	if(EDMA_intTest(tccRcvPing)) {
-		EDMA_intClear(tccRcvPing);
-		RcvPingDone=1;
-	}
-	else if(EDMA_intTest(tccRcvPong)) {
-		EDMA_intClear(tccRcvPong);
-		RcvPongDone=1;
-	}
-
 	if(EDMA_intTest(tccTrxPing)) {
 		EDMA_intClear(tccTrxPing);
 		TrxPingDone=1;
@@ -118,14 +106,12 @@ void HWI_handleEDMAInterrupt(){
 		TrxPongDone=1;
 	}
 
-	if(RcvPingDone && TrxPingDone) {
-		RcvPingDone=0;
+	if(TrxPingDone) {
 		TrxPingDone=0;
 		// SW-Interrupt
 		SWI_post(&procPing);
 	}
-	else if(RcvPongDone && TrxPongDone) {
-		RcvPongDone=0;
+	else if(TrxPongDone) {
 		TrxPongDone=0;
 		// SW-Interrupt
 		SWI_post(&procPong);
@@ -145,10 +131,16 @@ void HWI_handleEDMAInterrupt(){
 /*********************************************************/
 
 void SWI_processPing(){
+	int c;
+	for(c = 0; c < 16;c++){
+
+
+	}
+
 	processping++;
 	int i;
 	for(i = 0; i < BUF_SIZE; ++i){
-		oBufPing[i] = iBufPing[i];
+		oBufPing[i] = 0x00000000 | arr[i%4] | arr[i%4]<<16;
 	}
 
 }
@@ -157,7 +149,7 @@ void SWI_processPong(){
 	processpong++;
 	int i;
 	for(i = 0; i < BUF_SIZE; ++i){
-		oBufPong[i] = iBufPong[i];
+		oBufPong[i] = 0x00000000 | arr[i%4] | arr[i%4]<<16;
 	}
 }
 
@@ -193,7 +185,6 @@ void conf_EDMA(){
 	 * destination but a variable source address, so we need to
 	 * set the destination to a fixed address!
 	 */
-	conf_EDMA_iBuf.src = MCBSP_getRcvAddr(hMcBsp);
 	conf_EDMA_oBuf.dst = MCBSP_getXmtAddr(hMcBsp);
 
 
@@ -206,9 +197,7 @@ void conf_EDMA(){
 	 * is better coding practice to make it variable to allow
 	 * future expansion of the code.
 	 */
-	tccRcvPing = EDMA_intAlloc(-1);
 	tccTrxPing = EDMA_intAlloc(-1);
-	conf_EDMA_iBuf.opt |= EDMA_FMK(OPT, TCC, tccRcvPing);
 	conf_EDMA_oBuf.opt |= EDMA_FMK(OPT, TCC, tccTrxPing);
 
 
@@ -218,9 +207,7 @@ void conf_EDMA(){
 	 * EDMA parameter RAM. This allows us to reuse the configs
 	 * to set up the reload configuration for the pong buffers.
 	 */
-	EDMA_config(hEDMARcv, &conf_EDMA_iBuf);
 	EDMA_config(hEDMATrx, &conf_EDMA_oBuf);
-	EDMA_config(hEDMARcvPing, &conf_EDMA_iBuf);
 	EDMA_config(hEDMATrxPing, &conf_EDMA_oBuf);
 
 
@@ -235,7 +222,6 @@ void conf_EDMA(){
 	 * First we need to set the destination and source of the
 	 * corresponding pong buffers for both sides.
 	 */
-	conf_EDMA_iBuf.dst = (uint32_t)iBufPong;
 	conf_EDMA_oBuf.src = (uint32_t)oBufPong;
 
 	/*
@@ -245,19 +231,7 @@ void conf_EDMA(){
 	 * To overwrite the ones written before we need to
 	 * overwrite the whole 32 OPT bits
 	 */
-	tccRcvPong = EDMA_intAlloc(-1);
 	tccTrxPong = EDMA_intAlloc(-1);
-	conf_EDMA_iBuf.opt =      	EDMA_FMKS(OPT, PRI, HIGH) 		|
-								EDMA_FMKS(OPT, ESIZE, 16BIT)	|
-								EDMA_FMKS(OPT, 2DS, NO)         |
-								EDMA_FMKS(OPT, SUM, NONE)       |
-								EDMA_FMKS(OPT, 2DD, NO)         |
-								EDMA_FMKS(OPT, DUM, INC)        |
-								EDMA_FMKS(OPT, TCINT, YES)      |
-								EDMA_FMKS(OPT, TCC, OF(0))      |
-								EDMA_FMKS(OPT, LINK, YES)       |
-								EDMA_FMKS(OPT, FS, NO);
-
 	conf_EDMA_oBuf.opt =      	EDMA_FMKS(OPT, PRI, HIGH)       |
 								EDMA_FMKS(OPT, ESIZE, 16BIT)    |
 								EDMA_FMKS(OPT, 2DS, NO)         |
@@ -269,7 +243,6 @@ void conf_EDMA(){
 								EDMA_FMKS(OPT, LINK, YES)       |
 								EDMA_FMKS(OPT, FS, NO);
 
-	conf_EDMA_iBuf.opt |=		EDMA_FMK(OPT, TCC, tccRcvPong);
 	conf_EDMA_oBuf.opt |=		EDMA_FMK(OPT, TCC, tccTrxPong);
 
 
@@ -277,7 +250,6 @@ void conf_EDMA(){
 	 * Now we can write the pong buffer configs to the parameter RAM
 	 * tables we aquired before by using EDMA_config()..
 	 */
-	EDMA_config(hEDMARcvPong, &conf_EDMA_iBuf);
 	EDMA_config(hEDMATrxPong, &conf_EDMA_oBuf);
 
 
@@ -286,10 +258,7 @@ void conf_EDMA(){
 	 * whenever we finished a job and immediately starts to
 	 * fill the other buffer (ping -> pong -> ping).
 	 */
-	EDMA_link(hEDMARcv, hEDMARcvPing);
 	EDMA_link(hEDMATrx, hEDMATrxPing);
-	EDMA_link(hEDMARcvPing, hEDMARcvPong);
-	EDMA_link(hEDMARcvPong, hEDMARcvPing);
 	EDMA_link(hEDMATrxPing, hEDMATrxPong);
 	EDMA_link(hEDMATrxPong, hEDMATrxPing);
 
@@ -301,8 +270,6 @@ void conf_EDMA(){
 	 * can fire because of some wiggling bits
 	 * caused by an unstable supply.
 	 */
-	EDMA_intClear(tccRcvPing);
-	EDMA_intClear(tccRcvPong);
 	EDMA_intClear(tccTrxPing);
 	EDMA_intClear(tccTrxPong);
 
@@ -313,8 +280,6 @@ void conf_EDMA(){
 	 * switch to be toggled by enable_INT() after
 	 * we started the EDMA transfers.
 	 */
-	EDMA_intEnable(tccRcvPing);
-	EDMA_intEnable(tccRcvPong);
 	EDMA_intEnable(tccTrxPing);
 	EDMA_intEnable(tccTrxPong);
 }
