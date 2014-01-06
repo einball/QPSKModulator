@@ -23,6 +23,12 @@ int main(void) {
 	/* Turn on one LED so we can see it executed at least the main function */
 	DSK6713_LED_on(0);
 
+	/* Initialize the DIP switches to be able to read them */
+	DSK6713_DIP_init();
+
+	/* Read the dip switch config for the first time */
+	ui32SwitchState = DSK6713_DIP_get(3) | DSK6713_DIP_get(2)<<1 | DSK6713_DIP_get(1)<<2 | DSK6713_DIP_get(0)<<3;
+
 	/* Configure the codec according to the definitions in config_AIC23.c
 	 * via the McBSP0 interface
 	 */
@@ -71,15 +77,55 @@ int main(void) {
  * monitoring in case I break something in the process!
  * It is scheduled as a periodic function with 100ms delay
  * in the RTOS config file and takes no parameters at all!
+ * It also reads the switches and checks if something has
+ * changes and therefore posts a semaphore to notify that
+ * the output buffer has to be recalculated.
  */
 /*********************************************************/
 
 void PER_Blink_LED(){
 	DSK6713_LED_toggle(0);
 	DSK6713_LED_toggle(1);
+
+	HLP_ReadSwitches();
 }
 
 
+/*********************************************************/
+/* This task computes the sample data for the output of
+ * the modulator. It is asleep as long as there's no
+ * change on the switches. It is pending on a semaphore
+ * that will be posted through the helper function
+ * HLP_ReadSwitches() that only posts a semaphore if there
+ * is a different state on the switches and therefore
+ * the QPSK modulation has to change.
+ */
+/*********************************************************/
+void CalcOutput(){
+	while(1){
+
+		SEM_pendBinary(&SEM_RecalcPending, SYS_FOREVER);
+
+		/* Serial in Parallel Out */
+
+	}
+}
+
+
+/*********************************************************/
+/* This function is a helper function that determines the
+ * state of the switches to generate a datastream according
+ * to the constraints in the project description.
+ */
+/*********************************************************/
+void HLP_ReadSwitches(){
+	uint32_t ui32NewSwitchState = 0;
+
+	ui32NewSwitchState = DSK6713_DIP_get(3) | DSK6713_DIP_get(2)<<1 | DSK6713_DIP_get(1)<<2 | DSK6713_DIP_get(0)<<3;
+
+	if(ui32NewSwitchState != ui32SwitchState) SEM_postBinary(&SEM_RecalcPending);
+
+}
 
 /*********************************************************/
 /* This interrupt is called when the EDMA has finished
@@ -90,6 +136,7 @@ void PER_Blink_LED(){
  */
 /*********************************************************/
 
+
 void HWI_handleEDMAInterrupt(){
 	g++; //How often did the interrupt fire?
 
@@ -99,21 +146,10 @@ void HWI_handleEDMAInterrupt(){
 	/* Debug end */
 	if(EDMA_intTest(tccTrxPing)) {
 		EDMA_intClear(tccTrxPing);
-		TrxPingDone=1;
+		SWI_post(&procPing);
 	}
 	else if(EDMA_intTest(tccTrxPong)) {
 		EDMA_intClear(tccTrxPong);
-		TrxPongDone=1;
-	}
-
-	if(TrxPingDone) {
-		TrxPingDone=0;
-		// SW-Interrupt
-		SWI_post(&procPing);
-	}
-	else if(TrxPongDone) {
-		TrxPongDone=0;
-		// SW-Interrupt
 		SWI_post(&procPong);
 	}
 }

@@ -19,16 +19,27 @@
 #include <csl_mcbsp.h>
 #include "LED_blinkcfg.h"
 
+/*
+ * datastream is 16 long. That means we have 8 IQ samples
+ * and therefore we have at 48kHz output rate (24SPS)
+ * 8*24 = 192 Samples for 8 Symbols. But as we need to
+ * make our Hamming Window 10 symbols wide, we will need
+ * to multiply that by 10 and therefore we get 1920 Samples
+ * for 8 symbols.
+ *
+ */
 
-
-#define BUF_SIZE	1024
+#define DATASTREAM_SIZE 16
+#define SAMPLES_PER_SYMBOL 24
+#define HAMM_WIN_SYM_LENG 10
+#define BUF_SIZE	DATASTREAM_SIZE*SAMPLES_PER_SYMBOL*HAMM_WIN_SYM_LENG/2
 
 /*Variables to add to watch expressions */
 int g = 0;
 int processping = 0, processpong = 0;
 uint16_t arr[4] = {0x0000,0x7fff, 0x0000, 0x8000 };
 
-uint8_t dataStream[16] = {0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00};
+uint8_t dataStream[DATASTREAM_SIZE] = {0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00};
 
 /* Important stuff */
 MCBSP_Handle hMcBsp;
@@ -61,7 +72,7 @@ EDMA_Config conf_EDMA_oBuf = {
     EDMA_FMKS(OPT, FS, NO),               // Frame Sync nutzen?
     (uint32_t)&oBufPing,           // Quell-Adresse
     EDMA_FMK (CNT, FRMCNT, NULL)       |  // Anzahl Frames
-    EDMA_FMK (CNT, ELECNT, 1024),          // Anzahl Elemente
+    EDMA_FMK (CNT, ELECNT, BUF_SIZE),          // Anzahl Elemente
     EDMA_FMKS(DST, DST, OF(0)),      	  // Ziel-Adresse
     EDMA_FMKS(IDX, FRMIDX, DEFAULT)    |  // Frame index Wert
     EDMA_FMKS(IDX, ELEIDX, DEFAULT),      // Element index Wert
@@ -69,11 +80,18 @@ EDMA_Config conf_EDMA_oBuf = {
     EDMA_FMK (RLD, LINK, NULL)            // Reload Link
 };
 
+uint32_t ui32SwitchState = 0x00000000;
+
+/* Output Signal to be fed to the DAC */
+uint16_t ui16Output[BUF_SIZE];
+
 /* Declaration of function prototypes */
 void Blink_LED();
 void SWI_processPing();
 void SWI_processPong();
 void HWI_handleEDMAInterrupt();
+void CalcOutput();
+void HLP_ReadSwitches();
 void conf_EDMA();
 
 
