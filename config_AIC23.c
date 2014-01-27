@@ -19,7 +19,7 @@ unsigned short myAIC23_registers[10] = { \
 	    0x0014, /* Reg 4       Analog audio path control */ /* Bypass (d4) (without: D2) on to test if parametrized right */              \
 	    0x0006, /* Reg 5       Digital audio path control */              \
 	    0x0000, /* Reg 6       Power down control */                      \
-	    0x0043, /* Reg 7       Digital audio interface format */          \
+	    0x004f, /* Reg 7       Digital audio interface format */          \
 	    0x0000, /* Reg 8       Sample rate control */                     \
 	    0x0001  /* Reg 9       Digital interface activation */            \
 	};

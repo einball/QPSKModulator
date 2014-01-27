@@ -167,7 +167,7 @@ void SWI_processPing(){
 	processping++;
 	int i;
 	for(i = 0; i < BUF_SIZE; ++i){
-		oBufPing[i] = 0x00000000 | arr[i%4] | arr[i%4]<<16;
+		oBufPing[i] = 0x00000000 | arr[i%4];
 	}
 
 }
@@ -176,7 +176,7 @@ void SWI_processPong(){
 	processpong++;
 	int i;
 	for(i = 0; i < BUF_SIZE; ++i){
-		oBufPong[i] = 0x00000000 | arr[i%4] | arr[i%4]<<16;
+		oBufPong[i] = 0x00000000 | arr[i%4];
 	}
 }
 
@@ -257,7 +257,7 @@ void conf_EDMA(){
 	 */
 	tccTrxPong = EDMA_intAlloc(-1);
 	conf_EDMA_oBuf.opt =      	EDMA_FMKS(OPT, PRI, HIGH)       |
-								EDMA_FMKS(OPT, ESIZE, 16BIT)    |
+								EDMA_FMKS(OPT, ESIZE, 32BIT)    |
 								EDMA_FMKS(OPT, 2DS, NO)         |
 								EDMA_FMKS(OPT, SUM, INC)        |
 								EDMA_FMKS(OPT, 2DD, NO)         |

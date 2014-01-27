@@ -37,7 +37,7 @@
 /*Variables to add to watch expressions */
 int g = 0;
 int processping = 0, processpong = 0;
-uint16_t arr[4] = {0x0000,0x7fff, 0x0000, 0x8000 };
+uint32_t arr[4] = {0x00000000,0x7fffffff, 0x00000000, 0x80000000 };
 
 uint8_t dataStream[DATASTREAM_SIZE] = {0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00};
 
@@ -61,7 +61,7 @@ int TrxPongDone=0;
 /* The config needs further commenting on what I have done */
 EDMA_Config conf_EDMA_oBuf = {
     EDMA_FMKS(OPT, PRI, HIGH)          |  // Distribute to the two Queues
-    EDMA_FMKS(OPT, ESIZE, 16BIT)       |  // Element size
+    EDMA_FMKS(OPT, ESIZE, 32BIT)       |  // Element size
     EDMA_FMKS(OPT, 2DS, NO)            |  // No 2D-Transfer
     EDMA_FMKS(OPT, SUM, INC)           |  // Quell-update mode -> FEST (McBSP)!!!
     EDMA_FMKS(OPT, 2DD, NO)            |  // 2kein 2D-Transfer
