@@ -59,6 +59,7 @@ bios.TSK.create("TSK_CalcOutput");
 bios.TSK.instance("TSK_CalcOutput").order = 1;
 bios.TSK.instance("TSK_CalcOutput").fxn = prog.extern("TSK_CalcOutput");
 bios.SEM.create("SEM_RecalcPending");
+bios.TSK.instance("TSK_CalcOutput").fxn = prog.extern("CalcOutput");
 // !GRAPHICAL_CONFIG_TOOL_SCRIPT_INSERT_POINT!
 
 prog.gen();

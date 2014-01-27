@@ -49,7 +49,6 @@ int main(void) {
 	IRQ_globalEnable();
 
 	/* Enable the EDMA channels */
-	EDMA_enableChannel(hEDMARcv);
 	EDMA_enableChannel(hEDMATrx);
 
 
@@ -140,18 +139,16 @@ void HLP_ReadSwitches(){
 void HWI_handleEDMAInterrupt(){
 	g++; //How often did the interrupt fire?
 
-	/* Debug */
-	int TrxPingIntF = EDMA_intTest(tccTrxPing);
-	int TrxPongIntF = EDMA_intTest(tccTrxPong);
-	/* Debug end */
-	if(EDMA_intTest(tccTrxPing)) {
-		EDMA_intClear(tccTrxPing);
-		SWI_post(&procPing);
-	}
-	else if(EDMA_intTest(tccTrxPong)) {
-		EDMA_intClear(tccTrxPong);
-		SWI_post(&procPong);
-	}
+		if(EDMA_intTest(tccTrxPing)) {
+			EDMA_intClear(tccTrxPing);
+			SWI_post(&procPing);
+		}
+		else if(EDMA_intTest(tccTrxPong)) {
+			EDMA_intClear(tccTrxPong);
+			SWI_post(&procPong);
+		}
+
+
 }
 
 
@@ -167,12 +164,6 @@ void HWI_handleEDMAInterrupt(){
 /*********************************************************/
 
 void SWI_processPing(){
-	int c;
-	for(c = 0; c < 16;c++){
-
-
-	}
-
 	processping++;
 	int i;
 	for(i = 0; i < BUF_SIZE; ++i){
@@ -200,7 +191,6 @@ void conf_EDMA(){
 	 * need to be configured properly with a parameterset
 	 * and another parameterset that fills the pong Buffer.
 	 */
-	hEDMARcv = EDMA_open(EDMA_CHA_REVT1, EDMA_OPEN_RESET);
 	hEDMATrx = EDMA_open(EDMA_CHA_XEVT1, EDMA_OPEN_RESET);
 
 
@@ -208,9 +198,7 @@ void conf_EDMA(){
 	 * Aquire EDMA tables that hold the reload 	tables for both,
 	 * transmit and receive side bufferswitch.
 	 */
-	hEDMARcvPing = EDMA_allocTable(-1);
 	hEDMATrxPing = EDMA_allocTable(-1);
-	hEDMARcvPong = EDMA_allocTable(-1);
 	hEDMATrxPong = EDMA_allocTable(-1);
 
 
