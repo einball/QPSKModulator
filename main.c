@@ -166,8 +166,9 @@ void HWI_handleEDMAInterrupt(){
 void SWI_processPing(){
 	processping++;
 	int i;
-	for(i = 0; i < BUF_SIZE; ++i){
-		oBufPing[i] = 0x00000000 | arr[i%4];
+	for(i = 0; i < BUF_SIZE*2; i+=2){
+		oBufPing[i] = 0x00000000 | arr[i];
+		oBufPing[i+1] = 0x00000000 | arr[i];
 	}
 
 }
@@ -175,8 +176,9 @@ void SWI_processPing(){
 void SWI_processPong(){
 	processpong++;
 	int i;
-	for(i = 0; i < BUF_SIZE; ++i){
-		oBufPong[i] = 0x00000000 | arr[i%4];
+	for(i = 0; i < BUF_SIZE*2; i+=2){
+		oBufPong[i] = 0x00000000 | arr[i];
+		oBufPong[i+1] = 0x00000000 | arr[i];
 	}
 }
 

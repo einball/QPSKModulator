@@ -34,7 +34,7 @@ MCBSP_Config cfgDataMCBSP = {
         MCBSP_FMKS(RCR, RCOMPAND, MSB)          |	// No data compansion (MSB first)
         MCBSP_FMKS(RCR, RFIG, NO)               |	// Discard RX register content if framesync pulse occurs after the first bit
         MCBSP_FMKS(RCR, RDATDLY, 0BIT)          |	// Do not delay the data
-        MCBSP_FMKS(RCR, RFRLEN1, OF(1))         |	// Phase 1 consists of 1 symbol in 1 frame
+        MCBSP_FMKS(RCR, RFRLEN1, OF(0))         |	// Phase 1 consists of 1 symbol in 1 frame
         MCBSP_FMKS(RCR, RWDLEN1, 32BIT)         |	//
         MCBSP_FMKS(RCR, RWDREVRS, DISABLE),			// 32-bit Reversal is not used here
 
@@ -46,7 +46,7 @@ MCBSP_Config cfgDataMCBSP = {
         MCBSP_FMKS(XCR, XCOMPAND, MSB)          |	// No data compansion (MSB first)
         MCBSP_FMKS(XCR, XFIG, NO)               |	// Restart transmission if framesync pulse occurs after the first bit
         MCBSP_FMKS(XCR, XDATDLY, 0BIT)          |	// Do not delay the data
-        MCBSP_FMKS(XCR, XFRLEN1, OF(0))         |	// Phase 1 consists of 1 symbol in 1 frame
+        MCBSP_FMKS(XCR, XFRLEN1, OF(1))         |	// Phase 1 consists of 1 symbol in 1 frame
         MCBSP_FMKS(XCR, XWDLEN1, 32BIT)         |	// Symbollength in Phase 1 is 16bit
         MCBSP_FMKS(XCR, XWDREVRS, DISABLE),			// 32-bit Reversal is not used here
 
