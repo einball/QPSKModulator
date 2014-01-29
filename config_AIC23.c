@@ -14,8 +14,8 @@
 unsigned short myAIC23_registers[10] = { \
 	    0x0015, /* Reg 0       Left line input channel volume control */  \
 	    0x0015, /* Reg 1       Right line input channel volume control */ \
-	    0x00ff, /* Reg 2       Left channel headphone volume control, f9 for 0db, ff for +6db */   \
-	    0x00ff, /* Reg 3       Right channel headphone volume control */  \
+	    0x00f9, /* Reg 2       Left channel headphone volume control, f9 for 0db, ff for +6db */   \
+	    0x00f9, /* Reg 3       Right channel headphone volume control */  \
 	    0x0014, /* Reg 4       Analog audio path control */ /* Bypass (d4) (without: D2) on to test if parametrized right */              \
 	    0x0006, /* Reg 5       Digital audio path control */              \
 	    0x0000, /* Reg 6       Power down control */                      \
