@@ -26,8 +26,6 @@ int main(void) {
 	/* Initialize the DIP switches to be able to read them */
 	DSK6713_DIP_init();
 
-	/* Read the dip switch config for the first time */
-	ui32SwitchState = DSK6713_DIP_get(3) | DSK6713_DIP_get(2)<<1 | DSK6713_DIP_get(1)<<2 | DSK6713_DIP_get(0)<<3;
 
 	/* Configure the codec according to the definitions in config_AIC23.c
 	 * via the McBSP0 interface
@@ -42,6 +40,12 @@ int main(void) {
 
 	/* Configure EDMA */
 	conf_EDMA();
+
+	/* Time to initialize the buffer and zerofill it */
+	for(i = 0; i < 24; i++) FIFO_SYMBOLS[i] = 0;
+	for(i = 0; i < 10; i++) FIFO_I[i] = 0;
+	for(i = 0; i < 10; i++) FIFO_Q[i] = 0;
+
 
 	/* Config Interrupts */
 	IRQ_enable(IRQ_EVT_EDMAINT);
@@ -76,9 +80,6 @@ int main(void) {
  * monitoring in case I break something in the process!
  * It is scheduled as a periodic function with 100ms delay
  * in the RTOS config file and takes no parameters at all!
- * It also reads the switches and checks if something has
- * changes and therefore posts a semaphore to notify that
- * the output buffer has to be recalculated.
  */
 /*********************************************************/
 
@@ -86,44 +87,71 @@ void PER_Blink_LED(){
 	DSK6713_LED_toggle(0);
 	DSK6713_LED_toggle(1);
 
-	HLP_ReadSwitches();
 }
 
-
 /*********************************************************/
-/* This task computes the sample data for the output of
- * the modulator. It is asleep as long as there's no
- * change on the switches. It is pending on a semaphore
- * that will be posted through the helper function
- * HLP_ReadSwitches() that only posts a semaphore if there
- * is a different state on the switches and therefore
- * the QPSK modulation has to change.
+/*
+ * This function examines the switch positions and determines
+ * where to get the data from. It takes data in 8 bit chunks,
+ * splits them up in 2 bit chunks and returns them.
  */
 /*********************************************************/
-void CalcOutput(){
-	while(1){
+uint8_t HLP_getData(){
+	uint8_t outVal = 0x00;
+/*	uint8_t newSwitchState = DSK6713_DIP_get(1)<<1 | DSK6713_DIP_get(0);
 
-		SEM_pendBinary(&SEM_RecalcPending, SYS_FOREVER);
-
-		/* Serial in Parallel Out */
-
+	switch(dataSource){
+	case SRC_ZERO:
+		break;
+	case SRC_RAND:
+		break;
+	case SRC_ALT:
+		break;
+	case SRC_TEXT:
+		break;
+	case SRC_GEL:
+		break;
 	}
+*/
+
+	return 0x00;
 }
 
 
 /*********************************************************/
-/* This function is a helper function that determines the
- * state of the switches to generate a datastream according
- * to the constraints in the project description.
+/*
+ * This function advances the FIFO.
  */
 /*********************************************************/
-void HLP_ReadSwitches(){
-	uint32_t ui32NewSwitchState = 0;
+void HLP_UpdateFIFO(){
+	uint8_t bitInput;
 
-	ui32NewSwitchState = DSK6713_DIP_get(3) | DSK6713_DIP_get(2)<<1 | DSK6713_DIP_get(1)<<2 | DSK6713_DIP_get(0)<<3;
+	//The function getData() provides abstraction from the data source.
+	//It returns two bits in a char ... See what I did there? ;)
+	bitInput = HLP_getData();
 
-	if(ui32NewSwitchState != ui32SwitchState) SEM_postBinary(&SEM_RecalcPending);
+	//Shift
+	for(i = 9; i > 0; i++) FIFO_I[i] = FIFO_I[i-1];
+	for(i = 9; i > 0; i++) FIFO_Q[i] = FIFO_Q[i-1];
 
+	//Fill up
+	if(bitInput == 0x00){
+		FIFO_I[0] = 1;
+		FIFO_Q[0] = 0;
+	}
+	else if(bitInput == 0x01){
+		FIFO_I[0] = 0;
+		FIFO_Q[0] = 1;
+	}
+	else if(bitInput == 0x02){
+		FIFO_I[0] = 0;
+		FIFO_Q[0] = -1;
+	}
+	else{
+		FIFO_I[0] = -1;
+		FIFO_Q[0] = 0;
+	}
+	//Done
 }
 
 /*********************************************************/
@@ -137,7 +165,6 @@ void HLP_ReadSwitches(){
 
 
 void HWI_handleEDMAInterrupt(){
-	g++; //How often did the interrupt fire?
 
 		if(EDMA_intTest(tccTrxPing)) {
 			EDMA_intClear(tccTrxPing);
@@ -164,26 +191,109 @@ void HWI_handleEDMAInterrupt(){
 /*********************************************************/
 
 void SWI_processPing(){
-	processping++;
-	int i;
-	for(i = 0; i < BUF_SIZE*2; i+=2){
-		oBufPing[i] = 0x00000000 | arr[i];
-		oBufPing[i+1] = 0x00000000 | arr[i];
-	}
+	int i,j;
+
+	/*********************************************************/
+	/* Advance the FIFO and insert a new symbol as everytime
+	 * this function is called a symbol has been transmitted.
+	 */
+	/*********************************************************/
+	HLP_UpdateFIFO();
+
+	/*********************************************************/
+	/* We have twenty-four samples in a symbol. Therefore we
+	 * have to go through all of them. The outer loop takes
+	 * care of that.
+	 */
+	/*********************************************************/
+	for(i = 0; i < SAMPLES_PER_SYMBOL; i++){
+
+		/*********************************************************/
+		/* For each sample we need to set the initial array
+		 * value to zero. That is because we have a filter kernel
+		 * that spans over ten symbols which in turn means that we
+		 * have ten filter responses per sample. The inner loop
+		 * sums all responses up and stores them.
+		 */
+		/*********************************************************/
+		iPulse[i] = 0;
+		qPulse[i] = 0;
+
+
+		for(j = 0; j < HAMM_WIN_SYM_LENG; j++){
+
+			iPulse[i] = iPulse[i] + FIFO_I[j] * RCResp[j * SAMPLES_PER_SYMBOL + i];
+			qPulse[i] = qPulse[i] + FIFO_Q[j] * RCResp[j * SAMPLES_PER_SYMBOL + i];
+
+		} /* End for-loop over all responses */
+
+	} /* End for-loop over all samples */
+
+
+	/*********************************************************/
+	/* Now we need to mix the IQ baseband signal we just
+	 * generated to the final frequency. At 48kHz sampling
+	 * rate we have four points supporting the 12kHz sinewave
+	 * corresponding to the following multiplication factors.
+	 * This allows us to multiply the baseband values in a smart
+	 * way and copy them to the output buffer. We only take the
+	 * real part and therefore we have to subtract the Quadrature
+	 * channel from the Inphase channel.
+	 * We have a stereo codec but only a mono plug. If we were to
+	 * use only one channel, the plug would short circuit
+	 * and the output would be useless. Therefore we copy the
+	 * left channel to the right channel (or vice versa) to
+	 * solve that problem.
+	 */
+	/*********************************************************/
+	for(i = 0; i < SAMPLES_PER_SYMBOL*2; i = i + 8){
+
+		oBufPing[i + 0]	= (+1) * iPulse[i + 0];		/*	I * cos(0)      - Q * sin(0)      => (+1) * I -   0  * Q 	*/
+		oBufPing[i + 1]	= (+1) * iPulse[i + 0];
+		oBufPing[i + 2]	= (-1) * qPulse[i + 1];		/* 	I * cos(PI/2)   - Q * sin(PI/2)   =>   0  * I - (+1) * Q	*/
+		oBufPing[i + 3]	= (-1) * qPulse[i + 1];
+		oBufPing[i + 4]	= (-1) * iPulse[i + 2];		/*	I * cos(PI)     - Q * sin(PI)     => (-1) * I -   0  * Q 	*/
+		oBufPing[i + 5]	= (-1) * iPulse[i + 2];
+		oBufPing[i + 6] = (+1) * qPulse[i + 3];	 	/*	I * cos(3*PI/2) - Q * sin(3*PI/2) =>   0  * I - (-1) * Q 	*/
+		oBufPing[i + 7] = (+1) * qPulse[i + 3];
+
+	} /* End for-loop to mix to the carrier frequency */
 
 }
 
+/* See SWI_processPing() for explanations. Same principles apply here */
 void SWI_processPong(){
-	processpong++;
-	int i;
-	for(i = 0; i < BUF_SIZE*2; i+=2){
-		oBufPong[i] = 0x00000000 | arr[i];
-		oBufPong[i+1] = 0x00000000 | arr[i];
+	int i,j;
+
+	HLP_UpdateFIFO();
+
+	for(i = 0; i < SAMPLES_PER_SYMBOL; i++){
+
+		iPulse[i] = 0;
+		qPulse[i] = 0;
+
+		for(j = 0; j < HAMM_WIN_SYM_LENG; j++){
+
+			iPulse[i] = iPulse[i] + FIFO_I[j] * RCResp[j * SAMPLES_PER_SYMBOL + i];
+			qPulse[i] = qPulse[i] + FIFO_Q[j] * RCResp[j * SAMPLES_PER_SYMBOL + i];
+
+		}
+
+	}
+
+	for(i = 0; i < SAMPLES_PER_SYMBOL*2; i = i + 8){
+
+		oBufPong[i + 0]	= (+1) * iPulse[i + 0];
+		oBufPong[i + 1]	= (+1) * iPulse[i + 0];
+		oBufPong[i + 2]	= (-1) * qPulse[i + 1];
+		oBufPong[i + 3]	= (-1) * qPulse[i + 1];
+		oBufPong[i + 4]	= (-1) * iPulse[i + 2];
+		oBufPong[i + 5]	= (-1) * iPulse[i + 2];
+		oBufPong[i + 6] = (+1) * qPulse[i + 3];
+		oBufPong[i + 7] = (+1) * qPulse[i + 3];
+
 	}
 }
-
-/***********************************************************/
-
 
 
 void conf_EDMA(){

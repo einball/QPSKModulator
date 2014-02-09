@@ -185,7 +185,7 @@ PIP$                .set 0
 PIP_gNumEmbed       .set 02H
 PIP_gNextId         .set 00H
 PIP_OBJSIZE         .set 064H
-SEM$                .set 1
+SEM$                .set 0
 MBX$                .set 0
 QUE$                .set 1
 LCK$                .set 1

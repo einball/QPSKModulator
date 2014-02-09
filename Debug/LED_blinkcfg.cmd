@@ -94,12 +94,10 @@ _KNL_swi = KNL_swi;
 _procPing = procPing;
 _procPong = procPong;
 _TSK_idle = TSK_idle;
-_TSK_CalcOutput = TSK_CalcOutput;
 _IDL_cpuLoad = IDL_cpuLoad;
 _LNK_dataPump = LNK_dataPump;
 _RTA_dispatcher = RTA_dispatcher;
 _LOG_system = LOG_system;
-_SEM_RecalcPending = SEM_RecalcPending;
 _IDL_busyObj = IDL_busyObj;
 
 /* MODULE GBL */
@@ -210,8 +208,6 @@ SECTIONS {
 
         .dsm: {} > IRAM
 
-        .sem: {} > IRAM
-
         frt:    {} > IRAM
 
         .mem: 	  {} > IRAM
@@ -250,10 +246,6 @@ SECTIONS {
 
         .TSK_idle$stk: {
             *(.TSK_idle$stk)
-        } > IRAM
-
-        .TSK_CalcOutput$stk: {
-            *(.TSK_CalcOutput$stk)
         } > IRAM
 
         /* LOG_system buffer */

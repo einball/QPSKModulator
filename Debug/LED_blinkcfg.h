@@ -11,7 +11,6 @@
 #include <swi.h>
 #include <tsk.h>
 #include <log.h>
-#include <sem.h>
 #include <sts.h>
 
 #ifdef __cplusplus
@@ -26,9 +25,7 @@ extern far SWI_Obj KNL_swi;
 extern far SWI_Obj procPing;
 extern far SWI_Obj procPong;
 extern far TSK_Obj TSK_idle;
-extern far TSK_Obj TSK_CalcOutput;
 extern far LOG_Obj LOG_system;
-extern far SEM_Obj SEM_RecalcPending;
 extern far STS_Obj IDL_busyObj;
 
 

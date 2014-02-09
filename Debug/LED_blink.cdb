@@ -75,7 +75,7 @@ type GlobalStatus {
         prop Visible :: 0
         prop Writable :: 1
     }
-    global DATE :: "Wed Jan 29 15:10:10 2014" { 
+    global DATE :: "Sun Feb 09 18:30:25 2014" { 
         prop Type :: "{21455EA3-B96A-11cf-9BFE-0000C0AC14C7}"
         prop Visible :: 0
         prop Writable :: 0
@@ -5124,7 +5124,7 @@ type TSK {
         prop Writable :: 0
         prop NoGen :: 1
     }
-    global gNumOf :: 2 { 
+    global gNumOf :: 1 { 
         prop Visible :: 0
         prop Writable :: 0
         prop NoGen :: 1
@@ -5563,7 +5563,7 @@ object TSK_idle :: TSK {
     param iENV :: 0
     param iEXITFLAG :: 1
     param iUSETSKNAME :: 0
-    param Order :: 0
+    param Order :: 1
     param filter :: 2
     param maxformat :: "%g inst"
     param sumformat :: "%g inst"
@@ -6569,7 +6569,7 @@ type SEM {
         prop Writable :: 0
         prop NoGen :: 1
     }
-    global gNumOf :: 1 { 
+    global gNumOf :: 0 { 
         prop Visible :: 0
         prop Writable :: 0
         prop NoGen :: 1
@@ -7045,7 +7045,7 @@ type STS {
         prop Writable :: 1
         prop NoGen :: 1
     }
-    global gNumEmbed :: 6 { 
+    global gNumEmbed :: 5 { 
         prop Visible :: 0
         prop Writable :: 0
         prop NoGen :: 1
@@ -8823,46 +8823,5 @@ object procPong :: SWI {
     param filtmaxmult :: 1
     param filtsummult :: 1
     param unittype :: 0
-}
-
-object TSK_CalcOutput :: TSK {
-    param iComment :: "<add comments here>"
-    param iIsUsed :: 1
-    param iId :: 0
-    param iDelUser :: "USER"
-    param iDelMsg :: "ok"
-    param iFXN :: @_CalcOutput
-    param iARG0 :: 0
-    param iARG1 :: 0
-    param iARG2 :: 0
-    param iARG3 :: 0
-    param iARG4 :: 0
-    param iARG5 :: 0
-    param iARG6 :: 0
-    param iARG7 :: 0
-    param iAUTOSTK :: 1
-    param iMANSTK :: @null
-    param iSTKSZ :: 1024
-    param iPRI :: 1
-    param iENV :: 0
-    param iEXITFLAG :: 1
-    param iUSETSKNAME :: 0
-    param Order :: 1
-    param filter :: 2
-    param maxformat :: "%g inst"
-    param sumformat :: "%g inst"
-    param avgformat :: "%.2f inst"
-    param filtmaxmult :: 1
-    param filtsummult :: 1
-    param unittype :: 0
-}
-
-object SEM_RecalcPending :: SEM {
-    param iComment :: "<add comments here>"
-    param iIsUsed :: 1
-    param iId :: 0
-    param iDelUser :: "USER"
-    param iDelMsg :: "ok"
-    param iCount :: 0
 }
 
