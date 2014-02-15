@@ -96,6 +96,8 @@ void PER_Blink_LED(){
 /*********************************************************/
 uint8_t HLP_getData(){
 	uint8_t outVal = 0x00;
+
+	/* This is commented out for testing. The various input methods still have to be implemented .. */
 /*	uint8_t newSwitchState = DSK6713_DIP_get(1)<<1 | DSK6713_DIP_get(0);
 
 	switch(dataSource){
