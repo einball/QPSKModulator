@@ -12,7 +12,6 @@
 #include "config_AIC23.h"
 #include "config_MCBSP.h"
 
-
 int main(void) {
 
 	/* Initialize the CSL and the CPLD */
@@ -42,7 +41,6 @@ int main(void) {
 	conf_EDMA();
 
 	/* Time to initialize the buffer and zerofill it */
-	for(i = 0; i < 24; i++) FIFO_SYMBOLS[i] = 0;
 	for(i = 0; i < 10; i++) FIFO_I[i] = 0;
 	for(i = 0; i < 10; i++) FIFO_Q[i] = 0;
 
@@ -114,7 +112,8 @@ uint8_t HLP_getData(){
 	}
 */
 
-	return 0x00;
+	if(FIFO_I[0] == 1) return 0x01;
+
 }
 
 
@@ -131,8 +130,8 @@ void HLP_UpdateFIFO(){
 	bitInput = HLP_getData();
 
 	//Shift
-	for(i = 9; i > 0; i++) FIFO_I[i] = FIFO_I[i-1];
-	for(i = 9; i > 0; i++) FIFO_Q[i] = FIFO_Q[i-1];
+	for(i = 9; i > 0; i--) FIFO_I[i] = FIFO_I[i-1];
+	for(i = 9; i > 0; i--) FIFO_Q[i] = FIFO_Q[i-1];
 
 	//Fill up
 	if(bitInput == 0x00){
@@ -152,6 +151,7 @@ void HLP_UpdateFIFO(){
 		FIFO_Q[0] = 0;
 	}
 	//Done
+
 }
 
 /*********************************************************/
@@ -246,16 +246,16 @@ void SWI_processPing(){
 	 * solve that problem.
 	 */
 	/*********************************************************/
-	for(i = 0; i < SAMPLES_PER_SYMBOL*2; i = i + 8){
+	for(i = 0; i < SAMPLES_PER_SYMBOL; i = i + 4){
 
-		oBufPing[i + 0]	= (+1) * iPulse[i + 0];		/*	I * cos(0)      - Q * sin(0)      => (+1) * I -   0  * Q 	*/
-		oBufPing[i + 1]	= (+1) * iPulse[i + 0];
-		oBufPing[i + 2]	= (-1) * qPulse[i + 1];		/* 	I * cos(PI/2)   - Q * sin(PI/2)   =>   0  * I - (+1) * Q	*/
-		oBufPing[i + 3]	= (-1) * qPulse[i + 1];
-		oBufPing[i + 4]	= (-1) * iPulse[i + 2];		/*	I * cos(PI)     - Q * sin(PI)     => (-1) * I -   0  * Q 	*/
-		oBufPing[i + 5]	= (-1) * iPulse[i + 2];
-		oBufPing[i + 6] = (+1) * qPulse[i + 3];	 	/*	I * cos(3*PI/2) - Q * sin(3*PI/2) =>   0  * I - (-1) * Q 	*/
-		oBufPing[i + 7] = (+1) * qPulse[i + 3];
+		oBufPing[2*i + 0]	= (+1) * iPulse[i + 0];		/*	I * cos(0)      - Q * sin(0)      => (+1) * I -   0  * Q 	*/
+		oBufPing[2*i + 1]	= (+1) * iPulse[i + 0];
+		oBufPing[2*i + 2]	= (-1) * qPulse[i + 1];		/* 	I * cos(PI/2)   - Q * sin(PI/2)   =>   0  * I - (+1) * Q	*/
+		oBufPing[2*i + 3]	= (-1) * qPulse[i + 1];
+		oBufPing[2*i + 4]	= (-1) * iPulse[i + 2];		/*	I * cos(PI)     - Q * sin(PI)     => (-1) * I -   0  * Q 	*/
+		oBufPing[2*i + 5]	= (-1) * iPulse[i + 2];
+		oBufPing[2*i + 6] 	= (+1) * qPulse[i + 3];	 	/*	I * cos(3*PI/2) - Q * sin(3*PI/2) =>   0  * I - (-1) * Q 	*/
+		oBufPing[2*i + 7] 	= (+1) * qPulse[i + 3];
 
 	} /* End for-loop to mix to the carrier frequency */
 
@@ -281,16 +281,16 @@ void SWI_processPong(){
 
 	}
 
-	for(i = 0; i < SAMPLES_PER_SYMBOL*2; i = i + 8){
+	for(i = 0; i < SAMPLES_PER_SYMBOL; i = i + 4){
 
-		oBufPong[i + 0]	= (+1) * iPulse[i + 0];
-		oBufPong[i + 1]	= (+1) * iPulse[i + 0];
-		oBufPong[i + 2]	= (-1) * qPulse[i + 1];
-		oBufPong[i + 3]	= (-1) * qPulse[i + 1];
-		oBufPong[i + 4]	= (-1) * iPulse[i + 2];
-		oBufPong[i + 5]	= (-1) * iPulse[i + 2];
-		oBufPong[i + 6] = (+1) * qPulse[i + 3];
-		oBufPong[i + 7] = (+1) * qPulse[i + 3];
+		oBufPong[2*i + 0]	= (+1) * iPulse[i + 0];
+		oBufPong[2*i + 1]	= (+1) * iPulse[i + 0];
+		oBufPong[2*i + 2]	= (-1) * qPulse[i + 1];
+		oBufPong[2*i + 3]	= (-1) * qPulse[i + 1];
+		oBufPong[2*i + 4]	= (-1) * iPulse[i + 2];
+		oBufPong[2*i + 5]	= (-1) * iPulse[i + 2];
+		oBufPong[2*i + 6] 	= (+1) * qPulse[i + 3];
+		oBufPong[2*i + 7] 	= (+1) * qPulse[i + 3];
 
 	}
 }
