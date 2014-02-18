@@ -113,9 +113,15 @@ uint8_t HLP_getData(){
 		break;
 	}
 */
+	bytePos +=1;
+	if(bytePos > 40) bytePos = 0;
+	return text[bytePos];
 
-	if(FIFO_I[0] == 1) return 0x01;
-
+//	bytePos +=1;
+//	bytePos = bytePos % 4;
+//	if(FIFO_I[0] == 1) return 0x01;
+//	return 0x00;
+	//return bytePos;
 }
 
 
@@ -130,6 +136,7 @@ void HLP_UpdateFIFO(){
 	//The function getData() provides abstraction from the data source.
 	//It returns two bits in a char ... See what I did there? ;)
 	bitInput = HLP_getData();
+	bitInput = bitInput & 0x03;
 
 	//Shift
 	for(i = 9; i > 0; i--) FIFO_I[i] = FIFO_I[i-1];
